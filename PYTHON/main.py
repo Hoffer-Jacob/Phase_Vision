@@ -4,14 +4,16 @@
 import csv
 import numpy as np
 from matplotlib import pyplot as plt
-from scipy import signal
+from scipy import interpolate
 
 # CONSTANTS
 M_0 = 4 * np.pi * (10 ** -7)
+f = 60
+T_MAX = 1/10
 
 # USER CHOICE
 FILE_NAME = 'variable_sheet.csv'
-DO_GRAPH = False
+DO_GRAPH = True
 
 
 def main():
@@ -23,8 +25,11 @@ def main():
 
     for test_values in test_matrix:
         test_id, lines_xyz, current_magnitudes, phase_angles, fs, sensitivity = assign_variables(header, test_values)
+        if has_error(test_id, lines_xyz, current_magnitudes, phase_angles, fs, sensitivity):
+            test_results = test_results[0:-1]
+            continue
         interpolated_rms = find_rms_interpolated(lines_xyz, current_magnitudes, phase_angles, fs, sensitivity)
-        approx_rms = find_rms_interpolated(lines_xyz, current_magnitudes, phase_angles, 120, 1*10**-10)
+        approx_rms = find_rms_interpolated(lines_xyz, current_magnitudes, phase_angles, 120, 10**-12)
         error = 100 * (approx_rms - interpolated_rms) / approx_rms
         print("The percent error of test %4.2f is %6.2f%%" % (test_id, error))
         test_results[i] = [test_id, error]
@@ -60,9 +65,17 @@ def assign_variables(header, test_values):
     current_magnitudes = test_values[10:13]
     phase_angles = test_values[13:16]
     fs = test_values[np.where(header == 'smplRate')]
-    sensitivity = test_values[np.where(header == 'sensitivity')] * 10**-9
+    sensitivity = test_values[np.where(header == 'sensitivity')] * (10**-9)
 
     return test_id, lines_xyz, current_magnitudes, phase_angles, fs, sensitivity
+
+
+def has_error(test_id, lines_xyz, current_magnitudes, phase_angles, fs, sensitivity):
+
+    if test_id >= 0 and fs > 0 and sensitivity > 0 and any(current_magnitudes != 0):
+        return False
+
+    return True
 
 
 def find_magnetic_field(current_magnitudes, lines_xyz, phase_angles, t, f, fs):
@@ -72,12 +85,14 @@ def find_magnetic_field(current_magnitudes, lines_xyz, phase_angles, t, f, fs):
                           zip(current_magnitudes, phase_angles)]
 
     #  Calculate the magnetic field magnitude from the current of each line
-    line_dists = [np.linalg.norm(line_xyz) for line_xyz in lines_xyz]
-    magnetic_samples_3p = [M_0 * current_1p / (2 * np.pi * phase_dist) for current_1p, phase_dist in
-                           zip(current_samples_3p, line_dists)]
+    lines_dist = [np.linalg.norm(line_xyz) for line_xyz in lines_xyz]
+    lines_dist = np.array(lines_dist).T
+    magnetic_samples_3p = [M_0 * current / (2 * np.pi * line_dist) for current, line_dist in
+                           zip(current_samples_3p, lines_dist)]
 
     # Covert the magnetic field magnitude to vector via matrix multiplication
-    line_angles = [np.arctan(phase_xyz[0] / phase_xyz[2]) - np.pi/2 for phase_xyz in lines_xyz]
+    line_angles = [np.arctan2(line_xyz[2], line_xyz[0]) - np.pi/2 for line_xyz in lines_xyz]
+
     angle_matrix = np.array([[np.cos(line_angle) for line_angle in line_angles],
                             [0, 0, 0],
                             [np.sin(line_angle) for line_angle in line_angles]])
@@ -102,8 +117,7 @@ def find_rms_interpolated(lines_xyz, current_magnitudes, phase_angles, fs, sensi
     #   Right Horizontal: +x axis
     #   Out of Screen: +y axis
 
-    t = np.arange(0, 10, 1 / fs)
-    f = 60
+    t = np.arange(0, T_MAX, 1 / fs)
 
     #  Calculate the magnetic field vector at the point of measurement
     magnetic_samples_xyz = find_magnetic_field(current_magnitudes, lines_xyz, phase_angles, t, f, fs)
@@ -113,9 +127,16 @@ def find_rms_interpolated(lines_xyz, current_magnitudes, phase_angles, fs, sensi
                                in magnetic_samples] for magnetic_samples in magnetic_samples_xyz]
     magnetic_samples_xyz_r = np.reshape(magnetic_samples_xyz_r, np.shape(magnetic_samples_xyz))
 
-    magnetic_interpolated_xtytzt = np.array([signal.resample(magnetic_samples_r,
-                                                             np.shape(magnetic_samples_xyz_r)[1] * 10, t)
-                                             for magnetic_samples_r in magnetic_samples_xyz_r])
+    magnetic_interpolated_x = interpolate.interp1d(t, magnetic_samples_xyz_r[0], kind='cubic')
+
+    t_new = np.arange(0, T_MAX-1/60, 1/(fs*100))
+    y = magnetic_interpolated_x(t_new)
+
+    plt.plot(t, magnetic_samples_xyz_r[0], 'o', t_new, y, '-')
+    plt.show()
+
+
+    print(y)
 
     magnetic_interpolated_txyz = np.array([magnetic_interpolated_xtytzt[0][1],
                                            magnetic_interpolated_xtytzt[0][0],
