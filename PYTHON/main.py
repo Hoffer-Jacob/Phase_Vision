@@ -18,12 +18,17 @@ DO_GRAPH = True
 
 def main():
 
-    header, test_matrix = initialization()
+    simulation = initialization()
 
     test_results = np.empty(shape=(np.shape(test_matrix)[0], 2))
     i = 0
 
     for test_values in test_matrix:
+
+        test = Test(header, test_values)
+        print(test.a_current)
+        phase_a = Phase(test.a_current, test.a_phase, test.find_dist())
+
         test_id, lines_xyz, current_magnitudes, phase_angles, fs, sensitivity = assign_variables(header, test_values)
         if has_error(test_id, lines_xyz, current_magnitudes, phase_angles, fs, sensitivity):
             test_results = test_results[0:-1]
@@ -42,7 +47,76 @@ def main():
     return
 
 
+class Simulation:
+
+    def __init__(self):
+        self.tests = []
+
+    def add_test(self, new_test):
+        self.tests.append(new_test)
+
+
+class Test:
+    def __init__(self, header, test_list):
+
+        self.test_id = test_list[np.where(header == "testID")[0][0]]
+
+        self.a_to_gnd = test_list[np.where(header == "phAToGnd")[0][0]]
+        self.b_to_gnd = test_list[np.where(header == "phBToGnd")[0][0]]
+        self.c_to_gnd = test_list[np.where(header == "phCToGnd")[0][0]]
+
+        self.a_to_center = test_list[np.where(header == "phAToCenter")[0][0]]
+        self.b_to_center = test_list[np.where(header == "phBToCenter")[0][0]]
+        self.c_to_center = test_list[np.where(header == "phCToCenter")[0][0]]
+
+        self.a_current = test_list[np.where(header == "phACurrMag")[0][0]]
+        self.b_current = test_list[np.where(header == "phBCurrMag")[0][0]]
+        self.c_current = test_list[np.where(header == "phCCurrMag")[0][0]]
+
+        self.a_phase = test_list[np.where(header == "phAAngle")[0][0]]
+        self.b_phase = test_list[np.where(header == "phBAngle")[0][0]]
+        self.c_phase = test_list[np.where(header == "phCAngle")[0][0]]
+
+        self.pv_to_center = test_list[np.where(header == "pvDistFromCenter")[0][0]]
+
+        self.a_dist = np.linalg.norm([self.a_to_gnd, self.pv_to_center - self.a_to_center])
+        self.b_dist = np.linalg.norm([self.b_to_gnd, self.pv_to_center - self.b_to_center])
+        self.c_dist = np.linalg.norm([self.c_to_gnd, self.pv_to_center - self.c_to_center])
+
+        self.a_angle = np.arctan2(self.a_to_gnd, self.pv_to_center - self.a_to_center)
+        self.b_angle = np.arctan2(self.b_to_gnd, self.pv_to_center - self.b_to_center)
+        self.c_angle = np.arctan2(self.c_to_gnd, self.pv_to_center - self.c_to_center)
+
+        self.sensitivity = test_list[np.where(header == "sensitivity")[0][0]]
+
+        self.sample_rate = test_list[np.where(header == "smplRate")[0][0]]
+
+class Phase:
+    def __init__(self, current, phase, dist, angle):
+        self.current = current
+        self.phase = phase
+        self.dist = dist
+        self.angle = angle
+
+class PhaseVision:
+    def __init__(self, sensitivity, sample_rate):
+        self.sensitivity = sensitivity
+        self.sample_rate = sample_rate
+
+
 def initialization():
+
+    header_list, test_matrix = read_file()
+
+    new_simulation = Simulation()
+
+    for test_list in test_matrix:
+        new_simulation.add_test(Test(header_list, test_list))
+
+    return new_simulation
+
+
+def read_file():
 
     with open(FILE_NAME, mode='r', newline='') as csv_file:
         reader = csv.reader(csv_file, delimiter=',', quotechar='|')
@@ -51,10 +125,10 @@ def initialization():
     header_list = file[0][1:]
     tests_lists = [list(map(float, row[1:])) for row in file[2:]]
 
-    test_variables = np.array(header_list)
+    header_list = np.array(header_list)
     test_matrix = np.array(tests_lists)
 
-    return test_variables, test_matrix
+    return header_list, test_matrix
 
 
 def assign_variables(header, test_values):
