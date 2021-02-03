@@ -7,42 +7,22 @@ from matplotlib import pyplot as plt
 from scipy import interpolate
 
 # CONSTANTS
-M_0 = 4 * np.pi * (10 ** -7)
+m_0 = 4 * np.pi * 10 ** -7
 f = 60
 T_MAX = 1/10
 
 # USER CHOICE
 FILE_NAME = 'variable_sheet.csv'
-DO_GRAPH = True
 
 
 def main():
 
     simulation = initialization()
 
-    test_results = np.empty(shape=(np.shape(test_matrix)[0], 2))
-    i = 0
-
-    for test_values in test_matrix:
-
-        test = Test(header, test_values)
-        print(test.a_current)
-        phase_a = Phase(test.a_current, test.a_phase, test.find_dist())
-
-        test_id, lines_xyz, current_magnitudes, phase_angles, fs, sensitivity = assign_variables(header, test_values)
-        if has_error(test_id, lines_xyz, current_magnitudes, phase_angles, fs, sensitivity):
-            test_results = test_results[0:-1]
+    for test in simulation.tests:
+        if test.check_for_error():
             continue
-        interpolated_rms = find_rms_interpolated(lines_xyz, current_magnitudes, phase_angles, fs, sensitivity)
-        approx_rms = find_rms_interpolated(lines_xyz, current_magnitudes, phase_angles, 120, 10**-12)
-        error = 100 * (approx_rms - interpolated_rms) / approx_rms
-        print("The percent error of test %4.2f is %6.2f%%" % (test_id, error))
-        test_results[i] = [test_id, error]
-        i += 1
-
-    plot_data = test_results.T
-
-    plot_results(['Title', 'x-axis', 'y-axis'], plot_data, 5)
+        magnetic_field_sampled = sample_magnetic_field(test)
 
     return
 
@@ -51,45 +31,32 @@ class Simulation:
 
     def __init__(self):
         self.tests = []
+        self.results = []
 
     def add_test(self, new_test):
         self.tests.append(new_test)
 
+    def add_result(self, new_result):
+        self.results.append(new_result)
+
 
 class Test:
-    def __init__(self, header, test_list):
+    def __init__(self, a_phase, b_phase, c_phase, phase_vision):
+        self.phases = [a_phase, b_phase, c_phase]
+        self.phase_vision = phase_vision
 
-        self.test_id = test_list[np.where(header == "testID")[0][0]]
+    def check_for_error(self):
+        for phase in self.phases:
+            if phase.check_for_error():
+                return True
+            return False
 
-        self.a_to_gnd = test_list[np.where(header == "phAToGnd")[0][0]]
-        self.b_to_gnd = test_list[np.where(header == "phBToGnd")[0][0]]
-        self.c_to_gnd = test_list[np.where(header == "phCToGnd")[0][0]]
 
-        self.a_to_center = test_list[np.where(header == "phAToCenter")[0][0]]
-        self.b_to_center = test_list[np.where(header == "phBToCenter")[0][0]]
-        self.c_to_center = test_list[np.where(header == "phCToCenter")[0][0]]
+class Result:
+    def __init__(self, test_id, rms):
+        self.test_id = test_id
+        self.rms = rms
 
-        self.a_current = test_list[np.where(header == "phACurrMag")[0][0]]
-        self.b_current = test_list[np.where(header == "phBCurrMag")[0][0]]
-        self.c_current = test_list[np.where(header == "phCCurrMag")[0][0]]
-
-        self.a_phase = test_list[np.where(header == "phAAngle")[0][0]]
-        self.b_phase = test_list[np.where(header == "phBAngle")[0][0]]
-        self.c_phase = test_list[np.where(header == "phCAngle")[0][0]]
-
-        self.pv_to_center = test_list[np.where(header == "pvDistFromCenter")[0][0]]
-
-        self.a_dist = np.linalg.norm([self.a_to_gnd, self.pv_to_center - self.a_to_center])
-        self.b_dist = np.linalg.norm([self.b_to_gnd, self.pv_to_center - self.b_to_center])
-        self.c_dist = np.linalg.norm([self.c_to_gnd, self.pv_to_center - self.c_to_center])
-
-        self.a_angle = np.arctan2(self.a_to_gnd, self.pv_to_center - self.a_to_center)
-        self.b_angle = np.arctan2(self.b_to_gnd, self.pv_to_center - self.b_to_center)
-        self.c_angle = np.arctan2(self.c_to_gnd, self.pv_to_center - self.c_to_center)
-
-        self.sensitivity = test_list[np.where(header == "sensitivity")[0][0]]
-
-        self.sample_rate = test_list[np.where(header == "smplRate")[0][0]]
 
 class Phase:
     def __init__(self, current, phase, dist, angle):
@@ -97,6 +64,12 @@ class Phase:
         self.phase = phase
         self.dist = dist
         self.angle = angle
+
+    def check_for_error(self):
+        if any([self.current == 0, self.dist == 0]):
+            return True
+        return False
+
 
 class PhaseVision:
     def __init__(self, sensitivity, sample_rate):
@@ -111,7 +84,8 @@ def initialization():
     new_simulation = Simulation()
 
     for test_list in test_matrix:
-        new_simulation.add_test(Test(header_list, test_list))
+        new_test = create_test(header_list, test_list)
+        new_simulation.add_test(new_test)
 
     return new_simulation
 
@@ -131,17 +105,47 @@ def read_file():
     return header_list, test_matrix
 
 
-def assign_variables(header, test_values):
-    test_id = test_values[0]
-    lines_xyz = np.array([[test_values[5]-test_values[8], 0, test_values[2]],
-                          [test_values[6]-test_values[8], 0, test_values[3]],
-                          [test_values[7]-test_values[8], 0, test_values[4]]]) * 0.3048
-    current_magnitudes = test_values[10:13]
-    phase_angles = test_values[13:16]
-    fs = test_values[np.where(header == 'smplRate')]
-    sensitivity = test_values[np.where(header == 'sensitivity')] * (10**-9)
+def create_test(header, test_list):
 
-    return test_id, lines_xyz, current_magnitudes, phase_angles, fs, sensitivity
+    test_id = test_list[np.where(header == "testID")[0][0]]
+
+    a_to_gnd = test_list[np.where(header == "phAToGnd")[0][0]]
+    b_to_gnd = test_list[np.where(header == "phBToGnd")[0][0]]
+    c_to_gnd = test_list[np.where(header == "phCToGnd")[0][0]]
+
+    a_to_center = test_list[np.where(header == "phAToCenter")[0][0]]
+    b_to_center = test_list[np.where(header == "phBToCenter")[0][0]]
+    c_to_center = test_list[np.where(header == "phCToCenter")[0][0]]
+
+    a_current = test_list[np.where(header == "phACurrMag")[0][0]]
+    b_current = test_list[np.where(header == "phBCurrMag")[0][0]]
+    c_current = test_list[np.where(header == "phCCurrMag")[0][0]]
+
+    a_phase = np.deg2rad(test_list[np.where(header == "phAAngle")[0][0]])
+    b_phase = np.deg2rad(test_list[np.where(header == "phBAngle")[0][0]])
+    c_phase = np.deg2rad(test_list[np.where(header == "phCAngle")[0][0]])
+
+    pv_to_center = test_list[np.where(header == "pvDistFromCenter")[0][0]]
+
+    a_dist = np.linalg.norm([a_to_gnd, pv_to_center - a_to_center])
+    b_dist = np.linalg.norm([b_to_gnd, pv_to_center - b_to_center])
+    c_dist = np.linalg.norm([c_to_gnd, pv_to_center - c_to_center])
+
+    a_angle = np.arctan2(a_to_gnd, pv_to_center - a_to_center)
+    b_angle = np.arctan2(b_to_gnd, pv_to_center - b_to_center)
+    c_angle = np.arctan2(c_to_gnd, pv_to_center - c_to_center)
+
+    sensitivity = test_list[np.where(header == "sensitivity")[0][0]] * 10 ** -9
+
+    sample_rate = test_list[np.where(header == "smplRate")[0][0]]
+
+    new_a_phase = Phase(a_current, a_phase, a_dist, a_angle)
+    new_b_phase = Phase(b_current, b_phase, b_dist, b_angle)
+    new_c_phase = Phase(c_current, c_phase, c_dist, c_angle)
+
+    new_phase_vision = PhaseVision(sensitivity, sample_rate)
+
+    return Test(new_a_phase, new_b_phase, new_c_phase, new_phase_vision)
 
 
 def has_error(test_id, lines_xyz, current_magnitudes, phase_angles, fs, sensitivity):
@@ -150,6 +154,18 @@ def has_error(test_id, lines_xyz, current_magnitudes, phase_angles, fs, sensitiv
         return False
 
     return True
+
+
+def sample_magnetic_field(test):
+
+    fs = test.phase_vision.sample_rate
+
+    t = np.arange(0, 1/10, 1/fs)
+
+    sampled_magnetic_field = [(phase.current * m_0 / (2 * np.pi * phase.dist)) * np.sin(2 * np.pi * f * t + phase.phase)
+                              for phase in test.phases]
+
+    return
 
 
 def find_magnetic_field(current_magnitudes, lines_xyz, phase_angles, t, f, fs):
