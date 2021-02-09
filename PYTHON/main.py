@@ -6,28 +6,40 @@ import csv
 import numpy as np
 from matplotlib import pyplot as plt
 from scipy import interpolate
+from scipy import signal
 from simulation import *
 
 # CONSTANTS
 m_0 = 4 * np.pi * 10 ** -7
 f = 60
-T_MAX = 1/10
+T_MAX = 1  # seconds
+ft = 8000
 
 # USER CHOICE
 FILE_NAME = 'variable_sheet.csv'
+ENABLE_GRAPH = False
+TEST_NUM = [5, 6]
 
 
 def main():
 
     new_simulation = initialization()
 
-    for current_test in new_simulation.tests:
+    for current_test in [test for test in new_simulation.tests if any(np.round(test.test_id) == TEST_NUM)]:
+        # print('%.3E\t%3.0f' % (current_test.phase_vision.sensitivity, current_test.phase_vision.sample_rate))
         if current_test.check_for_error():
             continue
-        ts, b_samples_3d = sample_magnetic_field(current_test)
-        t, b_interpolate_3d = interpolate_samples(ts, b_samples_3d)
-        rms = find_rms(t, b_interpolate_3d)
-        new_simulation.add_result(Result(current_test.test_id, rms))
+        t, ts, b_3d, b_samples_3d = sample_magnetic_field(current_test)
+        ts, b_interpolate_3d = interpolate_samples(ts, b_samples_3d, ENABLE_GRAPH)
+        rms = find_rms(ts, b_interpolate_3d)
+        t, b_interpolate_3d = interpolate_samples(t, b_3d, False)
+        rms_ref = find_rms(t, b_interpolate_3d)
+        per_error = np.abs((rms - rms_ref) / rms_ref) * 100
+        new_simulation.add_result(Result(current_test.test_id, per_error))
+
+    new_simulation.print_results()
+    new_simulation.graph_results()
+
     return
 
 
@@ -114,17 +126,17 @@ def sample_magnetic_field(current_test):
 
     fs = current_test.phase_vision.sample_rate
 
-    t = np.arange(0, T_MAX, 1/8000)
-    ts = np.arange(0, 1/10, 1/fs)
+    t = np.arange(0, T_MAX, 1/ft)
+    ts = np.arange(0, T_MAX, 1/fs)
 
     b_3p = [(phase.current * m_0 / (2 * np.pi * phase.dist)) * np.sin(2 * np.pi * f * t + phase.phase)
                     for phase in current_test.phases]
     bs_3p = [(phase.current * m_0 / (2 * np.pi * phase.dist)) * np.sin(2 * np.pi * f * ts + phase.phase)
                     for phase in current_test.phases]
-
-    [plt.plot(t,  b_1p, '--') for b_1p in b_3p]
-    [plt.axvline(x=dt, color='r') for dt in ts]
-    plt.show()
+    if ENABLE_GRAPH:
+        [plt.plot(t,  b_1p, '--') for b_1p in b_3p]
+        [plt.axvline(x=dt, color='r') for dt in ts]
+        plt.show()
 
     angle_matrix = np.array([
         [np.cos(phase.angle) for phase in current_test.phases],
@@ -135,33 +147,43 @@ def sample_magnetic_field(current_test):
     b_3d = angle_matrix @ b_3p
     b_samples_3d = angle_matrix @ bs_3p
 
-    [plt.plot(t, b_1d, '--') for b_1d in b_3d]
-    [plt.axvline(x=dt, color='r') for dt in ts]
-    plt.show()
+    if ENABLE_GRAPH:
+        plt.title('Sample Locations of Each Dimension')
+        [plt.plot(t, b_1d, '--') for b_1d in b_3d]
+        [plt.axvline(x=dt, color='r') for dt in ts]
+        plt.show()
 
     sense = current_test.phase_vision.sensitivity
-    b_samples_3d = [[round(sample / sense) * sense for sample in b_samples] for b_samples in b_samples_3d]
+    b_samples_3d = [[np.round(sample / sense) * sense for sample in b_samples] for b_samples in b_samples_3d]
 
-    return ts, b_samples_3d
+    return t, ts, b_3d, b_samples_3d
 
 
-def interpolate_samples(ts, b_samples_3d):
+def interpolate_samples(ts, b_samples_3d, enable_graph):
 
-    t = np.arange(0, T_MAX - 1/120, 1 / 8000)
+    # t = np.arange(0, T_MAX - 1/120, 1 / 8000)
 
-    b_interpolate_3p = [interpolate.interp1d(ts, b_samples, kind='cubic', fill_value="extrapolate") for b_samples in
-                        b_samples_3d]
+    # b_interpolate_3p = [interpolate.interp1d(ts, b_samples, kind='cubic', fill_value="extrapolate") for b_samples in
+    #                     b_samples_3d]
 
-    [plt.plot(ts, b_samples, 'o') for b_samples in b_samples_3d]
-    [plt.plot(t, b_interpolate(t), '-') for b_interpolate in b_interpolate_3p]
-    plt.show()
+    ret = [signal.resample(b_samples, int(8000*T_MAX), ts, domain='time') for b_samples in b_samples_3d]
+
+    b_interpolate_3p = [tup[0] for tup in ret]
+    t = [tup[1] for tup in ret]
+
+    if enable_graph:
+        plt.title('Interpolated in Each Dimension with Samples Shown')
+        [plt.plot(ts, b_samples, 'o') for b_samples in b_samples_3d]
+        [plt.plot(tt, b_interpolate, '-') for tt, b_interpolate in zip(t, b_interpolate_3p)]
+        plt.show()
 
     return t, b_interpolate_3p
 
 
 def find_rms(t, b_interpolate_3d):
 
-    b_interpolate_3d_values = [b_interpolate(t) for b_interpolate in b_interpolate_3d]
+    # b_interpolate_3d_values = [b_interpolate(t) for b_interpolate in b_interpolate_3d]
+    b_interpolate_3d_values = b_interpolate_3d
     b_values = np.sum(b_interpolate_3d_values, axis=0)
 
     rms = np.sqrt(np.sum(b_values ** 2) / np.size(b_values))
