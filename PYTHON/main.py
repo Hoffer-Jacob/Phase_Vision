@@ -1,11 +1,12 @@
 # Author: Jacob Hoffer
 # Purpose: Verify Specifications
 
+import sys
 import csv
 import numpy as np
 from matplotlib import pyplot as plt
 from scipy import interpolate
-import simulation.simulation
+from simulation import *
 
 # CONSTANTS
 m_0 = 4 * np.pi * 10 ** -7
@@ -15,68 +16,18 @@ T_MAX = 1/10
 # USER CHOICE
 FILE_NAME = 'variable_sheet.csv'
 
-class Simulation:
-
-    def __init__(self):
-        self.tests = []
-        self.results = []
-
-    def add_test(self, new_test):
-        self.tests.append(new_test)
-
-    def add_result(self, new_result):
-        self.results.append(new_result)
-
-
-class Test:
-    def __init__(self, test_id, a_phase, b_phase, c_phase, phase_vision):
-        self.test_id = test_id
-        self.phases = [a_phase, b_phase, c_phase]
-        self.phase_vision = phase_vision
-
-    def check_for_error(self):
-        for phase in self.phases:
-            if phase.check_for_error():
-                return True
-            return False
-
-
-class Result:
-    def __init__(self, test_id, rms):
-        self.test_id = test_id
-        self.rms = rms
-
-
-class Phase:
-    def __init__(self, current, phase, dist, angle):
-        self.current = current
-        self.phase = phase
-        self.dist = dist
-        self.angle = angle
-
-    def check_for_error(self):
-        if any([self.current == 0, self.dist == 0]):
-            return True
-        return False
-
-
-class PhaseVision:
-    def __init__(self, sensitivity, sample_rate):
-        self.sensitivity = sensitivity
-        self.sample_rate = sample_rate
-
 
 def main():
 
-    simulation = initialization()
+    new_simulation = initialization()
 
-    for test in simulation.tests:
-        if test.check_for_error():
+    for current_test in new_simulation.tests:
+        if current_test.check_for_error():
             continue
-        ts, b_samples_3d = sample_magnetic_field(test)
+        ts, b_samples_3d = sample_magnetic_field(current_test)
         t, b_interpolate_3d = interpolate_samples(ts, b_samples_3d)
         rms = find_rms(t, b_interpolate_3d)
-        simulation.add_result(Result(test.test_id, rms))
+        new_simulation.add_result(Result(current_test.test_id, rms))
     return
 
 
@@ -159,26 +110,26 @@ def has_error(test_id, lines_xyz, current_magnitudes, phase_angles, fs, sensitiv
     return True
 
 
-def sample_magnetic_field(test):
+def sample_magnetic_field(current_test):
 
-    fs = test.phase_vision.sample_rate
+    fs = current_test.phase_vision.sample_rate
 
     t = np.arange(0, T_MAX, 1/8000)
     ts = np.arange(0, 1/10, 1/fs)
 
     b_3p = [(phase.current * m_0 / (2 * np.pi * phase.dist)) * np.sin(2 * np.pi * f * t + phase.phase)
-                    for phase in test.phases]
+                    for phase in current_test.phases]
     bs_3p = [(phase.current * m_0 / (2 * np.pi * phase.dist)) * np.sin(2 * np.pi * f * ts + phase.phase)
-                    for phase in test.phases]
+                    for phase in current_test.phases]
 
     [plt.plot(t,  b_1p, '--') for b_1p in b_3p]
     [plt.axvline(x=dt, color='r') for dt in ts]
     plt.show()
 
     angle_matrix = np.array([
-        [np.cos(phase.angle) for phase in test.phases],
+        [np.cos(phase.angle) for phase in current_test.phases],
         [0, 0, 0],
-        [np.sin(phase.angle) for phase in test.phases]
+        [np.sin(phase.angle) for phase in current_test.phases]
     ])
 
     b_3d = angle_matrix @ b_3p
@@ -188,7 +139,7 @@ def sample_magnetic_field(test):
     [plt.axvline(x=dt, color='r') for dt in ts]
     plt.show()
 
-    sense = test.phase_vision.sensitivity
+    sense = current_test.phase_vision.sensitivity
     b_samples_3d = [[round(sample / sense) * sense for sample in b_samples] for b_samples in b_samples_3d]
 
     return ts, b_samples_3d
