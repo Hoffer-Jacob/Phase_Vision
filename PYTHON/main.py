@@ -1,16 +1,11 @@
 # Author: Jacob Hoffer
 # Purpose: Verify Specifications
 
-import sys
 import csv
-import numpy as np
-from matplotlib import pyplot as plt
-from scipy import interpolate
 from scipy import signal
 from simulation import *
 
 # CONSTANTS
-m_0 = 4 * np.pi * 10 ** -7
 f = 60
 T_MAX = 1  # seconds
 ft = 8000
@@ -18,7 +13,7 @@ ft = 8000
 # USER CHOICE
 FILE_NAME = 'variable_sheet.csv'
 ENABLE_GRAPH = False
-TEST_NUM = [5, 6]
+TEST_NUM = [6]
 
 
 def main():
@@ -26,7 +21,6 @@ def main():
     new_simulation = initialization()
 
     for current_test in [test for test in new_simulation.tests if any(np.round(test.test_id) == TEST_NUM)]:
-        # print('%.3E\t%3.0f' % (current_test.phase_vision.sensitivity, current_test.phase_vision.sample_rate))
         if current_test.check_for_error():
             continue
         t, ts, b_3d, b_samples_3d = sample_magnetic_field(current_test)
@@ -129,10 +123,10 @@ def sample_magnetic_field(current_test):
     t = np.arange(0, T_MAX, 1/ft)
     ts = np.arange(0, T_MAX, 1/fs)
 
-    b_3p = [(phase.current * m_0 / (2 * np.pi * phase.dist)) * np.sin(2 * np.pi * f * t + phase.phase)
-                    for phase in current_test.phases]
-    bs_3p = [(phase.current * m_0 / (2 * np.pi * phase.dist)) * np.sin(2 * np.pi * f * ts + phase.phase)
-                    for phase in current_test.phases]
+    b_3p = [(phase.current * m_0 / (2 * np.pi * phase.dist)) * np.cos(2 * np.pi * f * t + phase.phase)
+            for phase in current_test.phases]
+    bs_3p = [(phase.current * m_0 / (2 * np.pi * phase.dist)) * np.cos(2 * np.pi * f * ts + phase.phase)
+             for phase in current_test.phases]
     if ENABLE_GRAPH:
         [plt.plot(t,  b_1p, '--') for b_1p in b_3p]
         [plt.axvline(x=dt, color='r') for dt in ts]

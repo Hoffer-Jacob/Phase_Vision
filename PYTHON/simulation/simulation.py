@@ -1,4 +1,7 @@
 from matplotlib import pyplot as plt
+import numpy as np
+
+m_0 = 4 * np.pi * 10 ** -7
 
 
 class Simulation:
@@ -38,6 +41,10 @@ class Test:
             if phase.check_for_error():
                 return True
             return False
+
+    def analytic(self):
+        phasors = [phase.current * m_0 / (2 * np.pi * phase.dist) * np.exp(1j * phase.phase) for phase in self.phases]
+        phasor
 
 
 class Result:
