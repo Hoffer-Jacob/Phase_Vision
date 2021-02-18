@@ -7,13 +7,14 @@ from simulation import *
 
 # CONSTANTS
 f = 60
-T_MAX = 1  # seconds
+T_MAX = 60  # seconds
 ft = 8000
 
 # USER CHOICE
 FILE_NAME = 'variable_sheet.csv'
+INTERPOLATION_TYPE = None  # resample
 ENABLE_GRAPH = False
-TEST_NUM = [6]
+TEST_NUM = [1, 2, 3, 4, 5, 6]
 
 
 def main():
@@ -32,7 +33,8 @@ def main():
         new_simulation.add_result(Result(current_test.test_id, per_error))
 
     new_simulation.print_results()
-    new_simulation.graph_results()
+    for num in TEST_NUM:
+        new_simulation.graph_results(num)
 
     return
 
@@ -155,15 +157,14 @@ def sample_magnetic_field(current_test):
 
 def interpolate_samples(ts, b_samples_3d, enable_graph):
 
-    # t = np.arange(0, T_MAX - 1/120, 1 / 8000)
-
-    # b_interpolate_3p = [interpolate.interp1d(ts, b_samples, kind='cubic', fill_value="extrapolate") for b_samples in
-    #                     b_samples_3d]
-
-    ret = [signal.resample(b_samples, int(8000*T_MAX), ts, domain='time') for b_samples in b_samples_3d]
-
-    b_interpolate_3p = [tup[0] for tup in ret]
-    t = [tup[1] for tup in ret]
+    if INTERPOLATION_TYPE == 'resample':
+        ret = [signal.resample(b_samples, int(8000*T_MAX), ts, domain='time') for b_samples in b_samples_3d]
+        b_interpolate_3p = [tup[0] for tup in ret]
+        t = [tup[1] for tup in ret]
+    elif INTERPOLATION_TYPE is None:
+        print('No Interpolation')
+        t = ts
+        b_interpolate_3p = b_samples_3d
 
     if enable_graph:
         plt.title('Interpolated in Each Dimension with Samples Shown')
