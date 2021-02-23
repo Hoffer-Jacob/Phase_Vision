@@ -7,14 +7,14 @@ from simulation import *
 
 # CONSTANTS
 f = 60
-T_MAX = 60  # seconds
+T_MAX = 600  # seconds
 ft = 8000
 
 # USER CHOICE
 FILE_NAME = 'variable_sheet.csv'
-INTERPOLATION_TYPE = None  # resample
+INTERPOLATION_TYPE = 'resample'  # resample
 ENABLE_GRAPH = False
-TEST_NUM = [1, 2, 3, 4, 5, 6]
+TEST_NUM = [1, 2, 3, 4, 5]
 
 
 def main():
