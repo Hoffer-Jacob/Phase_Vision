@@ -2,9 +2,13 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="9f3c63ca-9273-43e3-9e3b-642b54bd0d48" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/PYTHON/simulation/sinc_interpolation.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/PYTHON/Console_Output_ex.JPG" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/PYTHON/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/PYTHON/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/PYTHON/variable_sheet.csv" beforeDir="false" afterPath="$PROJECT_DIR$/PYTHON/variable_sheet.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/PYTHON/simulation/simulation.py" beforeDir="false" afterPath="$PROJECT_DIR$/PYTHON/simulation/simulation.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/PYTHON/test4.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/PYTHON/upsample_ex.png" beforeDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -14,11 +18,11 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/PYTHON/main.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="153">
-              <caret line="9" column="11" selection-start-line="9" selection-start-column="11" selection-end-line="9" selection-end-column="11" />
+            <state relative-caret-position="298">
+              <caret line="90" column="65" lean-forward="true" selection-start-line="90" selection-start-column="65" selection-end-line="90" selection-end-column="65" />
               <folding>
                 <element signature="e#57#67#0" expanded="true" />
               </folding>
@@ -26,14 +30,41 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="false">
+      <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/PYTHON/simulation/simulation.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="323">
-              <caret line="20" column="60" selection-start-line="20" selection-start-column="60" selection-end-line="20" selection-end-column="60" />
+            <state relative-caret-position="315">
+              <caret line="71" column="22" lean-forward="true" selection-start-line="71" selection-start-column="22" selection-end-line="71" selection-end-column="22" />
               <folding>
                 <element signature="e#0#36#0" expanded="true" />
               </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/PYTHON/simulation/__init__.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="68">
+              <caret line="4" lean-forward="true" selection-start-line="4" selection-end-line="4" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/PYTHON/simulation/sinc_interpolation.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="289">
+              <caret line="17" column="39" lean-forward="true" selection-start-line="17" selection-start-column="39" selection-end-line="17" selection-end-column="39" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/PYTHON/variable_sheet.csv">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="34">
+              <caret line="2" column="170" selection-start-line="2" selection-start-column="170" selection-end-line="2" selection-end-column="170" />
             </state>
           </provider>
         </entry>
@@ -67,23 +98,26 @@
         <option value="$PROJECT_DIR$/PYTHON/simulation/result.py" />
         <option value="$PROJECT_DIR$/PYTHON/simulation/phase.py" />
         <option value="$PROJECT_DIR$/PYTHON/simulation/phase_vision.py" />
+        <option value="$PROJECT_DIR$/PYTHON/sinc_interpolation.py" />
         <option value="$PROJECT_DIR$/PYTHON/simulation/__init__.py" />
-        <option value="$PROJECT_DIR$/PYTHON/simulation/simulation.py" />
+        <option value="$PROJECT_DIR$/PYTHON/simulation/sinc_interpolation.py" />
         <option value="$PROJECT_DIR$/PYTHON/main.py" />
+        <option value="$PROJECT_DIR$/PYTHON/simulation/simulation.py" />
       </list>
     </option>
   </component>
   <component name="ProjectFrameBounds" extendedState="6">
-    <option name="x" value="-8" />
-    <option name="y" value="-8" />
+    <option name="x" value="-354" />
+    <option name="y" value="381" />
     <option name="width" value="1936" />
-    <option name="height" value="1056" />
+    <option name="height" value="1055" />
   </component>
   <component name="ProjectView">
     <navigator proportions="" version="1">
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
+      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -106,7 +140,6 @@
           <select />
         </subPane>
       </pane>
-      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -226,7 +259,21 @@
       <option name="project" value="LOCAL" />
       <updated>1613670692033</updated>
     </task>
-    <option name="localTasksCounter" value="9" />
+    <task id="LOCAL-00009" summary="Graphing">
+      <created>1614117066032</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1614117066032</updated>
+    </task>
+    <task id="LOCAL-00010" summary="Graphing">
+      <created>1614117098437</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1614117098437</updated>
+    </task>
+    <option name="localTasksCounter" value="11" />
     <servers />
   </component>
   <component name="ToolWindowManager">
@@ -266,36 +313,57 @@
     <entry file="file://$PROJECT_DIR$/PYTHON/simulation/result.py" />
     <entry file="file://$PROJECT_DIR$/PYTHON/simulation/phase.py" />
     <entry file="file://$PROJECT_DIR$/PYTHON/simulation/phase_vision.py" />
-    <entry file="file://$PROJECT_DIR$/PYTHON/simulation/__init__.py">
+    <entry file="file://C:/Anaconda3/envs/Phase_Vision/Lib/site-packages/scipy/interpolate/interpolate.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="68">
-          <caret line="4" selection-start-line="4" selection-end-line="4" />
+        <state relative-caret-position="197">
+          <caret line="690" selection-start-line="690" selection-end-line="690" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://C:/Anaconda3/envs/Phase_Vision/Lib/site-packages/scipy/interpolate/polyint.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="197">
+          <caret line="73" selection-start-line="73" selection-end-line="73" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/PYTHON/variable_sheet.csv">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="34">
-          <caret line="2" column="52" selection-start-line="2" selection-start-column="47" selection-end-line="2" selection-end-column="52" />
+          <caret line="2" column="170" selection-start-line="2" selection-start-column="170" selection-end-line="2" selection-end-column="170" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/PYTHON/simulation/simulation.py">
+    <entry file="file://$PROJECT_DIR$/PYTHON/simulation/sinc_interpolation.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="323">
-          <caret line="20" column="60" selection-start-line="20" selection-start-column="60" selection-end-line="20" selection-end-column="60" />
-          <folding>
-            <element signature="e#0#36#0" expanded="true" />
-          </folding>
+        <state relative-caret-position="289">
+          <caret line="17" column="39" lean-forward="true" selection-start-line="17" selection-start-column="39" selection-end-line="17" selection-end-column="39" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/PYTHON/simulation/__init__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="68">
+          <caret line="4" lean-forward="true" selection-start-line="4" selection-end-line="4" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/PYTHON/main.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="153">
-          <caret line="9" column="11" selection-start-line="9" selection-start-column="11" selection-end-line="9" selection-end-column="11" />
+        <state relative-caret-position="298">
+          <caret line="90" column="65" lean-forward="true" selection-start-line="90" selection-start-column="65" selection-end-line="90" selection-end-column="65" />
           <folding>
             <element signature="e#57#67#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/PYTHON/simulation/simulation.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="315">
+          <caret line="71" column="22" lean-forward="true" selection-start-line="71" selection-start-column="22" selection-end-line="71" selection-end-column="22" />
+          <folding>
+            <element signature="e#0#36#0" expanded="true" />
           </folding>
         </state>
       </provider>
